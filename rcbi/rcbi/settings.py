@@ -17,9 +17,9 @@ DOWNLOAD_DELAY = 0.25
 
 EXTENSIONS = {
     'scrapy.contrib.corestats.CoreStats': 500,
-    'scrapy.contrib.closespider.CloseSpider': 500,
+#    'scrapy.contrib.closespider.CloseSpider': 500,
 }
-CLOSESPIDER_PAGECOUNT=30
+#CLOSESPIDER_PAGECOUNT=100
 
 ITEM_PIPELINES = {
     'rcbi.pipelines.JsonFileMergerPipeline': 800,

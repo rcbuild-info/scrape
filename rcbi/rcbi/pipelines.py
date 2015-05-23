@@ -18,7 +18,7 @@ class JsonFileMergerPipeline(object):
         self.part_skeleton = spider.settings["PART_SKELETON_FILE"]
         
     def process_item(self, item, spider):
-        if item["manufacturer"]:
+        if "manufacturer" in item and item["manufacturer"]:
             fn = item["manufacturer"].replace(" ", "-") + "/" + item["name"].replace(" ", "-").replace("/", "-") + ".json"
         else:
             fn = "UnknownManufacturer/" + item["site"] + "/" + item["name"].replace(" ", "-").replace("/", "-") + ".json"
@@ -35,13 +35,14 @@ class JsonFileMergerPipeline(object):
                 part_info = json.loads(f.read())
         if "name" not in part_info or not part_info["name"]:
             part_info["name"] = item["name"]
-        if "manufacturer" not in part_info or not part_info["manufacturer"]:
+        if "manufacturer" in item and ("manufacturer" not in part_info or not part_info["manufacturer"]):
             part_info["manufacturer"] = item["manufacturer"]
-        if "url" not in part_info:
-            part_info["url"] = [item["url"]]
-        elif item["url"] not in part_info["url"]:
-            part_info["url"].append(item["url"])
-        part_info["url"] = filter(bool, part_info["url"])
+        if "urls" not in part_info:
+            part_info["urls"] = {}
+            part_info["urls"]["store"] = [item["url"]]
+        elif item["url"] not in part_info["urls"]["store"]:
+            part_info["urls"]["store"].append(item["url"])
+        part_info["urls"]["store"] = filter(bool, part_info["urls"]["store"])
         # also catalog subpart ids
         # also catalog interchangeable parts
         with open(full_fn, "w") as f:

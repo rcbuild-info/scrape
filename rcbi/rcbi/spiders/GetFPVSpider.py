@@ -27,7 +27,8 @@ class GetFPVSpider(CrawlSpider):
             if header == "Manufacturer":
                 manufacturer = data[i].xpath("text()").extract()[0]
         item = Part()
-        item["manufacturer"] = manufacturer
+        if manufacturer and manufacturer != "No":
+          item["manufacturer"] = manufacturer
         item["site"] = "getfpv"
         item["url"] = response.url
         product_name = response.css("div.product-name")
