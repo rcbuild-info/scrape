@@ -46,5 +46,5 @@ class JsonFileMergerPipeline(object):
         # also catalog subpart ids
         # also catalog interchangeable parts
         with open(full_fn, "w") as f:
-            f.write(json.dumps(part_info, indent=1))
+            f.write(json.dumps(part_info, indent=1, sort_keys=True))
         return item
