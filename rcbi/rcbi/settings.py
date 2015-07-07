@@ -16,10 +16,12 @@ NEWSPIDER_MODULE = 'rcbi.spiders'
 DOWNLOAD_DELAY = 0.25
 
 EXTENSIONS = {
-    'scrapy.contrib.corestats.CoreStats': 500,
-#    'scrapy.contrib.closespider.CloseSpider': 500,
+    'scrapy.extensions.corestats.CoreStats': 500#,
+    #'scrapy.extensions.closespider.CloseSpider': 500,
 }
 #CLOSESPIDER_PAGECOUNT=100
+
+LOG_LEVEL="INFO"
 
 ITEM_PIPELINES = {
     'rcbi.pipelines.JsonFileMergerPipeline': 800,
@@ -32,8 +34,7 @@ PART_SKELETON_FILE = "/home/tannewt/code/rcbuild.info-part-skeleton/part.json"
 USER_AGENT = 'rcbi (+https://rcbuild.info)'
 
 DOWNLOADER_MIDDLEWARES = {
-    'scrapy.contrib.downloadermiddleware.httpcache.HttpCacheMiddleware': 1,
+    'scrapy.downloadermiddlewares.httpcache.HttpCacheMiddleware': 1,
 }
-HTTPCACHE_POLICY = "scrapy.contrib.httpcache.RFC2616Policy"
+HTTPCACHE_POLICY = "scrapy.extensions.httpcache.RFC2616Policy"
 HTTPCACHE_ENABLED = True
-
