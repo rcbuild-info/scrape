@@ -16,7 +16,7 @@ class JsonFileMergerPipeline(object):
     def open_spider(self, spider):
         self.root = spider.settings["JSON_FILE_DIRECTORY"]
         self.part_skeleton = spider.settings["PART_SKELETON_FILE"]
-        
+
     def process_item(self, item, spider):
         if "manufacturer" in item and item["manufacturer"]:
             fn = item["manufacturer"].replace(" ", "-") + "/" + item["name"].replace(" ", "-").replace("/", "-") + ".json"
@@ -28,11 +28,15 @@ class JsonFileMergerPipeline(object):
             os.makedirs(d)
         part_info = {}
         if os.path.isfile(full_fn):
-            with open(full_fn, "r") as f:
-                part_info = json.loads(f.read())
+          with open(full_fn, "r") as f:
+            part_info = json.loads(f.read())
+        elif os.path.islink(full_fn):
+          full_fn = os.path.realpath(full_fn)
+          with open(full_fn, "r") as f:
+            part_info = json.loads(f.read())
         else:
-            with open(self.part_skeleton, "r") as f:
-                part_info = json.loads(f.read())
+          with open(self.part_skeleton, "r") as f:
+            part_info = json.loads(f.read())
         if "name" not in part_info or not part_info["name"]:
             part_info["name"] = item["name"]
         if "manufacturer" in item and ("manufacturer" not in part_info or not part_info["manufacturer"]):
