@@ -1,3 +1,3 @@
 #!/bin/bash
 mv $1 $2
-ln -s $2 $1
+ln -sr $2 $1
