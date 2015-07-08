@@ -19,7 +19,7 @@ EXTENSIONS = {
     'scrapy.extensions.corestats.CoreStats': 500#,
     #'scrapy.extensions.closespider.CloseSpider': 500,
 }
-#CLOSESPIDER_PAGECOUNT=100
+#CLOSESPIDER_PAGECOUNT=30
 
 LOG_LEVEL="INFO"
 
