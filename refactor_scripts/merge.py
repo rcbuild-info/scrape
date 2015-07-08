@@ -23,7 +23,6 @@ def mergeFiles(merges, destination, part = None, test = False):
     with open(destination, "r") as f:
       part = json.load(f)
   for fn in merges:
-    print fn
     with open(fn, "r") as f:
       this_part = json.load(f)
       if part:
@@ -32,19 +31,18 @@ def mergeFiles(merges, destination, part = None, test = False):
         part = this_part
 
   for fn in merges:
-    print fn
     target = os.path.relpath(destination, os.path.dirname(fn))
     if not test:
       os.remove(fn)
       os.symlink(target, fn)
     else:
-      print "symlink " + fn + " -> " + target
+      print("symlink " + fn + " -> " + target)
   if not test:
     with open(destination, "w") as f:
       json.dump(part, f, indent=1, sort_keys=True)
   else:
-    print destination
-    print part
+    print(destination)
+    print(part)
     print
 
 if __name__ == "__main__":
