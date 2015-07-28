@@ -4,6 +4,9 @@ from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
 from rcbi.items import Part
 
+import urlparse
+import urllib
+
 MANUFACTURERS = ["Boscam", "Orange", "Rotorgeeks", "Loc8tor", "Skyzone", "T-Motor", "Zippy", "FrSKY"]
 CORRECT = {"Abusemark": "AbuseMark", "FrSKY": "FrSky", "HQ Prop": "HQProp", "Orange": "OrangeRx"}
 PREFIX_TO_MANUFACTURER = {"Nano-Tech": "Turnigy"}
@@ -34,7 +37,6 @@ class RotorGeeksSpider(CrawlSpider):
         if manufacturer and manufacturer != "No":
           item["manufacturer"] = manufacturer
         item["site"] = self.name
-        item["url"] = response.url
         product_name = response.css("#content h1")
         if not product_name:
             return
@@ -60,4 +62,18 @@ class RotorGeeksSpider(CrawlSpider):
             for prefix in STRIP_PREFIX[m]:
               if item["name"].startswith(prefix):
                 item["name"] = item["name"][len(prefix):].strip()
+                
+                
+        parsed = urlparse.urlparse(response.url)
+        qs = urlparse.parse_qs(parsed.query)
+        qs.pop("path", None)
+        # By default all values in qs will be a list and cause funky % encoding
+        # in the resulting url. So, if the list is one value then we replace the
+        # list with it.
+        for k in qs:
+            if len(qs[k]) == 1:
+                qs[k] = qs[k][0]
+        item["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
+                                           parsed[3], urllib.urlencode(qs),
+                                           parsed[5]))
         return item
