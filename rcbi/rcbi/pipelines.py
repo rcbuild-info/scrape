@@ -9,6 +9,8 @@ import json
 import os
 import os.path
 
+import urlparse
+
 from scrapy import log
 from scrapy.conf import settings
 
@@ -44,8 +46,11 @@ class JsonFileMergerPipeline(object):
         if "urls" not in part_info:
             part_info["urls"] = {}
             part_info["urls"]["store"] = [item["url"]]
-        elif item["url"] not in part_info["urls"]["store"]:
-            part_info["urls"]["store"].append(item["url"])
+        else:
+          domain = urlparse.urlparse(item["url"]).netloc
+          part_info["urls"]["store"] = filter(lambda x: urlparse.urlparse(x).netloc != domain, part_info["urls"]["store"])
+
+          part_info["urls"]["store"].append(item["url"])
         part_info["urls"]["store"] = filter(bool, part_info["urls"]["store"])
         # also catalog subpart ids
         # also catalog interchangeable parts

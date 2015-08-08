@@ -7,21 +7,23 @@ from rcbi.items import Part
 import urlparse
 import urllib
 
-MANUFACTURERS = ["AtasSphere", "Cobra", "Dinogy", "SkyRC", "SKYRC", "DAL RC (Surveilzone)", "RMRC", "DYS", "HQProp"]
-CORRECT = {"SKYRC": "SkyRC", "DAL RC (Surveilzone)" : "Surveilzone", "RMRC": "ReadyMadeRC"}
+MANUFACTURERS = ["AtasSphere", "Cobra", "Dinogy", "SkyRC", "SKYRC", "DAL RC (Surveilzone)", "RMRC", "DYS", "HQProp", "Gemfan", "Sunnysky", "Tiger Motor", "Skyzone", "Drone Matters", "DM", "TBS", "SEETEC", "Pololu", "OrangeRx", "OrangeRX", "Lumenier", "ImmersionRC", "IBCrazy", "Futaba", "FrSky"]
+CORRECT = {"SKYRC": "SkyRC", "DAL RC (Surveilzone)" : "Surveilzone", "RMRC": "ReadyMadeRC", "Tiger Motor": "T-Motor", "DM": "Drone Matters", "TBS": "Team BlackSheep", "OrangeRX": "OrangeRx"}
 NEW_PREFIX = {"DAL RC (Surveilzone)": "DalProp"}
 class DroneMattersSpider(CrawlSpider):
     name = "dronematters"
     allowed_domains = ["dronematters.com"]
-    start_urls = ["http://www.dronematters.com/catalog/seo_sitemap/product/"]
+    start_urls = ["http://www.dronematters.com/catalog/seo_sitemap/category/", "http://www.dronematters.com/fpv/antennas/2-4ghz.html"]
 
     rules = (
         # Extract links matching 'category.php' (but not matching 'subsection.php')
         # and follow links from them (since no callback means follow=True by default).
-        Rule(LinkExtractor(allow=('seo_sitemap/product/', ))),
+        Rule(LinkExtractor(allow=('seo_sitemap/category/', ))),
+        Rule(LinkExtractor(restrict_css=".pages", )),
+        Rule(LinkExtractor(restrict_css=".sitemap", )),
 
         # Extract links matching 'item.php' and parse them with the spider's method parse_item
-        Rule(LinkExtractor(allow=('.*html', )), callback='parse_item'),
+        Rule(LinkExtractor(restrict_css=".product-name"), callback='parse_item')
     )
 
     def parse_item(self, response):
