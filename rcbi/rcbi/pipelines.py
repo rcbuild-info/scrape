@@ -8,6 +8,7 @@
 import json
 import os
 import os.path
+import urlparse
 
 from scrapy import log
 from scrapy.conf import settings
@@ -47,6 +48,25 @@ class JsonFileMergerPipeline(object):
         elif item["url"] not in part_info["urls"]["store"]:
             part_info["urls"]["store"].append(item["url"])
         part_info["urls"]["store"] = filter(bool, part_info["urls"]["store"])
+
+        # Some stores provide the same item under different urls depending on
+        # the category. In this case the filename is still the same so here we
+        # ensure we only have one of them. We also start at the end of the list
+        # so we keep the newest urls.
+        store_urls = part_info["urls"]["store"]
+        store_url_ids = set()
+        unique_store_urls = []
+        for url in reversed(store_urls):
+          parsed = urlparse.urlparse(url)
+          if parsed.query != "" or os.path.basename(parsed.path) == "":
+            unique_store_urls.append(url)
+            continue
+
+          key = (parsed.netloc, os.path.basename(parsed.path))
+          if key not in store_url_ids:
+            unique_store_urls.append(url)
+            store_url_ids.add(key)
+        part_info["urls"]["store"] = unique_store_urls
         # also catalog subpart ids
         # also catalog interchangeable parts
         with open(full_fn, "w") as f:
