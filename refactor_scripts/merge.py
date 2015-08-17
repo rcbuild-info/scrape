@@ -39,7 +39,7 @@ def mergeFiles(merges, destination, part = None, test = False):
       print("symlink " + fn + " -> " + target)
   if not test:
     with open(destination, "w") as f:
-      json.dump(part, f, indent=1, sort_keys=True)
+      f.write(json.dumps(part, indent=1, sort_keys=True, separators=(',', ': ')))
   else:
     print(destination)
     print(part)

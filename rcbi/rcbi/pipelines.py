@@ -38,6 +38,9 @@ class JsonFileMergerPipeline(object):
         else:
           with open(self.part_skeleton, "r") as f:
             part_info = json.loads(f.read())
+
+        # Scraped parts now have weight and price but I'm not sure how we want
+        # to store it here. So we drop it for now.
         if "name" not in part_info or not part_info["name"]:
             part_info["name"] = item["name"]
         if "manufacturer" in item and ("manufacturer" not in part_info or not part_info["manufacturer"]):
@@ -66,9 +69,10 @@ class JsonFileMergerPipeline(object):
           if key not in store_url_ids:
             unique_store_urls.append(url)
             store_url_ids.add(key)
-        part_info["urls"]["store"] = unique_store_urls
+        # Reverse the list again to approximate the original order.
+        part_info["urls"]["store"] = list(reversed(unique_store_urls))
         # also catalog subpart ids
         # also catalog interchangeable parts
         with open(full_fn, "w") as f:
-            f.write(json.dumps(part_info, indent=1, sort_keys=True))
+            f.write(json.dumps(part_info, indent=1, sort_keys=True, separators=(',', ': ')))
         return item
