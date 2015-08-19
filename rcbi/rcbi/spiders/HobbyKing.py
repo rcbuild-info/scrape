@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import scrapy
 from scrapy import log
 from scrapy.spiders import CrawlSpider, Rule
