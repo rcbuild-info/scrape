@@ -1,7 +1,7 @@
 import scrapy
 from scrapy import log
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
 from rcbi.items import Part
 
 import urlparse
@@ -50,7 +50,7 @@ class RotorGeeksSpider(CrawlSpider):
           if item["name"].startswith(prefix):
             item["manufacturer"] = PREFIX_TO_MANUFACTURER[prefix]
             break
-        
+
         if "manufacturer" in item:
           m = item["manufacturer"]
           if m in CORRECT:
@@ -62,8 +62,8 @@ class RotorGeeksSpider(CrawlSpider):
             for prefix in STRIP_PREFIX[m]:
               if item["name"].startswith(prefix):
                 item["name"] = item["name"][len(prefix):].strip()
-                
-                
+
+
         parsed = urlparse.urlparse(response.url)
         qs = urlparse.parse_qs(parsed.query)
         qs.pop("path", None)

@@ -5,7 +5,7 @@ from scrapy.linkextractors import LinkExtractor
 from rcbi.items import Part
 
 MANUFACTURERS = ["Walkera", "WL Toys", "Syma", "RCX"]
-CORRECT = {"RCXHOBBY.COM": "RCX", "Fatshark": "FatShark"}
+CORRECT = {"RCXHOBBY.COM": "RCX", "Fatshark": "FatShark", "HobbyWing": "Hobbywing"}
 NEW_PREFIX = {}
 class MyRCMartSpider(CrawlSpider):
     name = "myrcmart"
