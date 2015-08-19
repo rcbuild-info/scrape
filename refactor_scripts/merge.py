@@ -21,8 +21,10 @@ def merge(original, new):
 def mergeFiles(merges, destination, part = None, test = False):
   if os.path.isfile(destination):
     with open(destination, "r") as f:
-      part = json.load(f)
+      part.update(json.load(f))
   for fn in merges:
+    if os.path.islink(fn):
+      continue
     with open(fn, "r") as f:
       this_part = json.load(f)
       if part:
@@ -32,7 +34,7 @@ def mergeFiles(merges, destination, part = None, test = False):
 
   for fn in merges:
     target = os.path.relpath(destination, os.path.dirname(fn))
-    if not test:
+    if not test and fn != target:
       os.remove(fn)
       os.symlink(target, fn)
     else:
