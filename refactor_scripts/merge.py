@@ -21,7 +21,11 @@ def merge(original, new):
 def mergeFiles(merges, destination, part = None, test = False):
   if os.path.isfile(destination):
     with open(destination, "r") as f:
-      part.update(json.load(f))
+      destination_part = json.load(f)
+      if part:
+        part.update(destination_part)
+      else:
+        part = destination_part
   for fn in merges:
     if os.path.islink(fn):
       continue
