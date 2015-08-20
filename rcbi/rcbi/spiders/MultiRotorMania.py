@@ -4,7 +4,7 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from rcbi.items import Part
 
-MANUFACTURERS = ["HQProp", "FrSky", "Hawkeye", "Eachine", "Frsky", "Tattu", "ZTW", "uBlox", "VAS", "TAROT", "Tarot", "T-Motor", "T-Motors", "Sunnysky", "SunnySky", "SkyZone", "MRM", "Gemfan", "GemFan", "DYS", "Diatone", "Boscam"]
+MANUFACTURERS = ["HQProp", "FrSky", "Hawkeye", "Eachine", "Frsky", "Tattu", "ZTW", "uBlox", "VAS", "TAROT", "Tarot", "T-Motor", "T-Motors", "Sunnysky", "SunnySky", "SkyZone", "MRM", "Gemfan", "GemFan", "DYS", "Diatone", "Boscam", "X-CAM"]
 CORRECT = {"Frsky": "FrSky", "VAS": "Video Aerial Systems", "TAROT": "Tarot", "T-Motors": "T-Motor", "SunnySky": "Sunnysky", "MRM": "MultiRotorMania", "GemFan": "Gemfan"}
 NEW_PREFIX = {}
 class MultiRotorManiaSpider(CrawlSpider):
