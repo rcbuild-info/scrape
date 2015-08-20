@@ -4,7 +4,10 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from rcbi.items import Part
 
-MANUFACTURERS = ["Gemfan", "HQprop", "Cobra", "SunnySky"]
+import urlparse
+import urllib
+
+MANUFACTURERS = ["Gemfan", "HQprop", "Cobra", "SunnySky", "FPV-Reconn"]
 CORRECT = {"HQprop": "HQProp", "SunnySky": "Sunnysky"}
 NEW_PREFIX = {}
 class FPVReconnSpider(CrawlSpider):
@@ -21,7 +24,20 @@ class FPVReconnSpider(CrawlSpider):
     def parse_item(self, response):
       item = Part()
       item["site"] = self.name
-      item["url"] = response.url
+
+      parsed = urlparse.urlparse(response.url)
+      qs = urlparse.parse_qs(parsed.query)
+      qs.pop("path", None)
+      # By default all values in qs will be a list and cause funky % encoding
+      # in the resulting url. So, if the list is one value then we replace the
+      # list with it.
+      for k in qs:
+          if len(qs[k]) == 1:
+              qs[k] = qs[k][0]
+      item["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
+                                         parsed[3], urllib.urlencode(qs),
+                                         parsed[5]))
+
       product_name = response.css("#content h1")
       if not product_name:
           return
