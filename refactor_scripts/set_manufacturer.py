@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
+import copy
 import os
 import os.path
 import sys
 
 import merge
-
 
 def setManufacturer(manufacturer, destinations, test=False):
   base_part = {u'category': "", u'name': "", u'subpart': [], u'equivalent': [], u'urls': {u'store': [], u'related': [], u'manufacturer': []}, u'manufacturer': manufacturer, u'replacement': []}
@@ -16,7 +16,7 @@ def setManufacturer(manufacturer, destinations, test=False):
     if test:
       print(destination, new_destination)
     else:
-      merge.mergeFiles([destination], new_destination, part=base_part)
+      merge.mergeFiles([destination], new_destination, part=copy.deepcopy(base_part))
 
 if __name__ == "__main__":
   manufacturer = sys.argv[1].decode("utf-8")
