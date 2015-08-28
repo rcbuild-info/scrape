@@ -8,6 +8,7 @@
 import json
 import os
 import os.path
+import urlparse
 
 import urlparse
 
@@ -39,6 +40,9 @@ class JsonFileMergerPipeline(object):
         else:
           with open(self.part_skeleton, "r") as f:
             part_info = json.loads(f.read())
+
+        # Scraped parts now have weight and price but I'm not sure how we want
+        # to store it here. So we drop it for now.
         if "name" not in part_info or not part_info["name"]:
             part_info["name"] = item["name"]
         if "manufacturer" in item and ("manufacturer" not in part_info or not part_info["manufacturer"]):
@@ -52,8 +56,28 @@ class JsonFileMergerPipeline(object):
 
           part_info["urls"]["store"].append(item["url"])
         part_info["urls"]["store"] = filter(bool, part_info["urls"]["store"])
+
+        # Some stores provide the same item under different urls depending on
+        # the category. In this case the filename is still the same so here we
+        # ensure we only have one of them. We also start at the end of the list
+        # so we keep the newest urls.
+        store_urls = part_info["urls"]["store"]
+        store_url_ids = set()
+        unique_store_urls = []
+        for url in reversed(store_urls):
+          parsed = urlparse.urlparse(url)
+          if parsed.query != "" or os.path.basename(parsed.path) == "":
+            unique_store_urls.append(url)
+            continue
+
+          key = (parsed.netloc, os.path.basename(parsed.path))
+          if key not in store_url_ids:
+            unique_store_urls.append(url)
+            store_url_ids.add(key)
+        # Reverse the list again to approximate the original order.
+        part_info["urls"]["store"] = list(reversed(unique_store_urls))
         # also catalog subpart ids
         # also catalog interchangeable parts
         with open(full_fn, "w") as f:
-            f.write(json.dumps(part_info, indent=1, sort_keys=True))
+            f.write(json.dumps(part_info, indent=1, sort_keys=True, separators=(',', ': ')))
         return item

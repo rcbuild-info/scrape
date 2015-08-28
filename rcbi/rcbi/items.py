@@ -13,3 +13,6 @@ class Part(scrapy.Item):
     name = scrapy.Field()
     site = scrapy.Field()
     manufacturer = scrapy.Field()
+    weight = scrapy.Field()
+    price = scrapy.Field()
+    quantity = scrapy.Field()

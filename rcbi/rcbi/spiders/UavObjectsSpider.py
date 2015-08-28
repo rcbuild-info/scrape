@@ -1,7 +1,7 @@
 import scrapy
 from scrapy import log
-from scrapy.contrib.spiders import SitemapSpider, Rule
-from scrapy.contrib.linkextractors import LinkExtractor
+from scrapy.spiders import SitemapSpider, Rule
+from scrapy.linkextractors import LinkExtractor
 from rcbi.items import Part
 
 MANUFACTURERS = ["Rctimer", "RCTimer", "BaseCam", "Elgae", "ELGAE", "ArduFlyer", "Boscam"]
@@ -10,11 +10,11 @@ class UavObjectsSpider(SitemapSpider):
     name = "uavobjects"
     allowed_domains = ["uavobjects.com"]
     sitemap_urls = ["http://www.uavobjects.com/product-sitemap.xml"]
-    
+
     sitemap_rules = [
         ('/product/', 'parse_item'),
     ]
-    
+
     def parse_item(self, response):
         item = Part()
         item["site"] = "uavobjects"

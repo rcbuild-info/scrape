@@ -1,7 +1,7 @@
 import scrapy
 from scrapy import log
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
 from rcbi.items import Part
 
 import string
