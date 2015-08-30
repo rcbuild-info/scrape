@@ -12,7 +12,7 @@ def setManufacturer(manufacturer, destinations, test=False):
 
   for destination in destinations:
     destination = destination.decode("utf-8")
-    new_destination = os.path.join(manufacturer, os.path.basename(destination))
+    new_destination = os.path.join(manufacturer.replace(" ", "-"), os.path.basename(destination))
     if test:
       print(destination, new_destination)
     else:
