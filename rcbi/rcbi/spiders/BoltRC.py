@@ -54,7 +54,7 @@ class BoltRCSpider(CrawlSpider):
 
       for quantity in QUANTITY:
         if quantity in item["name"]:
-          item["quantity"] = 4
+          item["quantity"] = QUANTITY[quantity]
           item["name"] = item["name"].replace(quantity, "")
 
       for m in MANUFACTURERS:
