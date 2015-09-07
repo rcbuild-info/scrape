@@ -23,12 +23,17 @@ EXTENSIONS = {
 
 LOG_LEVEL="INFO"
 
+DUPEFILTER_CLASS="rcbi.dupefilter.Dupefilter"
+#DUPEFILTER_DEBUG=True
+
 ITEM_PIPELINES = {
     'rcbi.pipelines.JsonFileMergerPipeline': 800,
 }
 
-JSON_FILE_DIRECTORY = "/home/tannewt/code/rcbuild.info-parts"
-PART_SKELETON_FILE = "/home/tannewt/code/rcbuild.info-part-skeleton/part.json"
+#JSON_FILE_DIRECTORY = "/home/tannewt/code/rcbuild.info-parts"
+#PART_SKELETON_FILE = "/home/tannewt/code/rcbuild.info-part-skeleton/part.json"
+JSON_FILE_DIRECTORY = "/Users/tannewt/case/parts"
+PART_SKELETON_FILE = "/Users/tannewt/rcbuild.info-part-skeleton/part.json"
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = 'rcbi (+https://rcbuild.info)'
