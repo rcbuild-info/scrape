@@ -11,6 +11,9 @@ MANUFACTURERS = ["Boscam", "Orange", "Rotorgeeks", "Loc8tor", "Skyzone", "T-Moto
 CORRECT = {"Abusemark": "AbuseMark", "FrSKY": "FrSky", "HQ Prop": "HQProp", "Orange": "OrangeRx"}
 PREFIX_TO_MANUFACTURER = {"Nano-Tech": "Turnigy"}
 STRIP_PREFIX = {"HQProp": ["HQ"], "Lemon Rx": ["Lemon"]}
+STOCK_STATE_MAP = {"In Stock": "in_stock",
+                   "Out Of Stock": "out_of_stock",
+                   "Pre-Order": "backordered"}
 class RotorGeeksSpider(CrawlSpider):
     name = "rotorgeeks"
     allowed_domains = ["rotorgeeks.com"]
@@ -63,6 +66,32 @@ class RotorGeeksSpider(CrawlSpider):
               if item["name"].startswith(prefix):
                 item["name"] = item["name"][len(prefix):].strip()
 
+        product_code = response.css("#otp-model::text")
+        if product_code:
+          item["sku"] = product_code.extract_first().strip()
+
+        variant = {}
+        variant["timestamp"] = response.headers["Date"]
+        if "Last-Modified" in response.headers:
+          variant["timestamp"] = response.headers["Last-Modified"]
+        item["variants"] = [variant]
+
+        text = response.css(".description::text")
+        # Skip the first. Its a newline before the first span.
+        text_index = 1
+        for h in headers:
+          label = h.css("::text").extract_first().strip()
+          value = text[text_index].extract().strip()
+          text_index += 2
+
+          if label == "Availability:":
+            variant["stock_text"] = value
+            if value in STOCK_STATE_MAP:
+              variant["stock_state"] = STOCK_STATE_MAP[value]
+            else:
+              print(value)
+          elif label == "Product Code:":
+            item["sku"] = value
 
         parsed = urlparse.urlparse(response.url)
         qs = urlparse.parse_qs(parsed.query)
@@ -73,7 +102,15 @@ class RotorGeeksSpider(CrawlSpider):
         for k in qs:
             if len(qs[k]) == 1:
                 qs[k] = qs[k][0]
-        item["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
-                                           parsed[3], urllib.urlencode(qs),
-                                           parsed[5]))
+        variant["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
+                                              parsed[3], urllib.urlencode(qs),
+                                              parsed[5]))
+
+        price = response.css(".price")
+        if price:
+          special = price.css(".price-new::text")
+          if special:
+            variant["price"] = special.extract_first().strip()
+          else:
+            variant["price"] = price.css("::text").extract_first().split()[1]
         return item
