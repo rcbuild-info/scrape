@@ -22,6 +22,8 @@ class MultiRotorManiaSpider(CrawlSpider):
       item = Part()
       item["site"] = self.name
       item["url"] = response.url
+      if item["url"].startswith("http://www."):
+        item["url"] = item["url"].replace("http://www.", "http://")
       product_name = response.xpath("//*[@id=\"center_column\"]/div[1]/div[3]/font/b")
       if not product_name:
           return
