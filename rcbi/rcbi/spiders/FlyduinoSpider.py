@@ -23,7 +23,6 @@ class FlyduinoSpider(CrawlSpider):
     def parse_item(self, response):
       item = Part()
       item["site"] = "flyduino"
-      item["url"] = response.url
       product_name = response.css("div.hproduct")
       if not product_name:
           return
@@ -35,4 +34,35 @@ class FlyduinoSpider(CrawlSpider):
           item["manufacturer"] = m
           item["name"] = item["name"][len(m):].strip()
           break
+
+      sku = response.css("#artnr::text")
+      if sku:
+        item["sku"] = sku.extract_first().strip()
+
+      weight = response.css("#weight::text")
+      if weight:
+        item["weight"] = weight.extract_first().strip() + "kg"
+
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      if "Last-Modified" in response.headers:
+        variant["timestamp"] = response.headers["Last-Modified"]
+      item["variants"] = [variant]
+      variant["url"] = response.url
+
+      price = response.css("#price::text")
+      if price:
+        variant["price"] = price.extract_first().strip()
+
+      availability = response.css(".signal_image")
+      if availability:
+        classes = availability.css("::attr(class)").extract_first().split()
+        # Skip the text because it may be in German or English
+        if "a2" in classes:
+          variant["stock_state"] = "in_stock"
+        elif "a1" in classes:
+          variant["stock_state"] = "low_stock"
+        elif "a0" in classes:
+          variant["stock_state"] = "out_of_stock"
+
       return item
