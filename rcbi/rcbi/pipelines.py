@@ -94,18 +94,12 @@ class JsonFileMergerPipeline(object):
         if "weight" in item and ("weight" not in part_info or not part_info["weight"]):
           part_info["weight"] = item["weight"]
 
-        # map existing urls to their variant object
-        url_to_index = {}
-        for i, variant in enumerate(part_info["variants"]):
-          url_to_index[variant["url"]] = i
+        # Remove all variants from this url
+        part_info["variants"] = [x for x in part_info["variants"] if x["url"] != item["variants"][0]["url"]]
 
-        # Update all variants from this one.
+        # Re-add all variants.
         for variant in item["variants"]:
-          url = variant["url"]
-          if url in url_to_index:
-            part_info["variants"][url_to_index[url]].update(variant)
-          else:
-            part_info["variants"].append(variant)
+          part_info["variants"].append(variant)
 
         # also catalog subpart ids
         # also catalog interchangeable parts
