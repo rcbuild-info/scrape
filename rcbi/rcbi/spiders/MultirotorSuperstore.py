@@ -103,18 +103,4 @@ class MultirotorSuperstoreSpider(CrawlSpider):
             variant["price"] = price.extract_first().strip()
 
           # TODO(tannewt): Support tiered pricing.
-
-
-      # Handle quantity
-      # for r in QUANTITY_REGEXS:
-      #   q_match = r.search(item["name"])
-      #   if q_match:
-      #     d = q_match.groupdict()
-      #     if d["set"]:
-      #       variant["quantity"] = int(d["set"])
-      #     elif d["pair"]:
-      #       variant["quantity"] = 2 * int(d["pair"])
-      #     if d["color"]:
-      #       variant["description"] = d["color"]
-      #     break
       return item
