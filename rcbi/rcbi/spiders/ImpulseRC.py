@@ -4,10 +4,13 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from rcbi.items import Part
 
-MANUFACTURERS = ["DYS", "HQ Prop", "Sunnysky", "Tiger Motor", "Cobra"]
+MANUFACTURERS = ["DYS", "HQ Prop", "Sunnysky", "Tiger Motor", "Cobra", "Pololu"]
 CORRECT = {"HQ Prop": "HQProp", "Tiger Motor": "T-Motor"}
 NEW_PREFIX = {}
 QUANTITY = {"4x ": 4, "8x ": 8}
+STOCK_STATE_MAP = {"Available For Pre-Order": "backordered",
+                   "Out of stock": "out_of_stock",
+                   "In stock": "in_stock"}
 class ImpulseRCSpider(CrawlSpider):
     name = "impulserc"
     allowed_domains = ["impulserc.com"]
@@ -21,21 +24,11 @@ class ImpulseRCSpider(CrawlSpider):
     def parse_item(self, response):
       item = Part()
       item["site"] = self.name
-      item["url"] = response.url
       product_name = response.css("[itemprop='name']")
       if not product_name:
           return
       item["name"] = product_name[0].xpath("text()").extract()[0].strip()
 
-      price = response.css("[itemprop='price']")
-      if price:
-        item["price"] = price.xpath("text()").extract()[0].strip()
-
-      for quantity in QUANTITY:
-        if quantity in item["name"]:
-          item["quantity"] = 4
-          item["name"] = item["name"].replace(quantity, "")
-          
       if "Alien" in item["name"] or "String Theory" in item["name"] or "Warpquad" in item["name"]:
         item["manufacturer"] = "ImpulseRC"
 
@@ -50,4 +43,30 @@ class ImpulseRCSpider(CrawlSpider):
             item["name"] = NEW_PREFIX[m] + " " + item["name"]
           if m in CORRECT:
             item["manufacturer"] = CORRECT[m]
+
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      if "Last-Modified" in response.headers:
+        variant["timestamp"] = response.headers["Last-Modified"]
+      item["variants"] = [variant]
+      variant["url"] = response.url
+
+      price = response.css("[itemprop='price']")
+      if price:
+        variant["price"] = price.css("::text").extract_first().strip()
+
+      for quantity in QUANTITY:
+        if quantity in item["name"]:
+          variant["quantity"] = QUANTITY[quantity]
+          item["name"] = item["name"].replace(quantity, "")
+
+      stock = response.css(".stock .value::text")
+      if stock:
+        text = stock.extract_first().strip()
+        variant["stock_text"] = text
+        if text in STOCK_STATE_MAP:
+          variant["stock_state"] = STOCK_STATE_MAP[text]
+        else:
+          print(text)
+
       return item
