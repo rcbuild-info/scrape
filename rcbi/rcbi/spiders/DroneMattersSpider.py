@@ -4,12 +4,15 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from rcbi.items import Part
 
+import os.path
 import urlparse
 import urllib
 
 MANUFACTURERS = ["AtasSphere", "Cobra", "Dinogy", "SkyRC", "SKYRC", "DAL RC (Surveilzone)", "RMRC", "DYS", "HQProp", "Gemfan", "Sunnysky", "Tiger Motor", "Skyzone", "Drone Matters", "DM", "TBS", "SEETEC", "Pololu", "OrangeRx", "OrangeRX", "Lumenier", "ImmersionRC", "IBCrazy", "Futaba", "FrSky"]
 CORRECT = {"SKYRC": "SkyRC", "DAL RC (Surveilzone)" : "Surveilzone", "RMRC": "ReadyMadeRC", "Tiger Motor": "T-Motor", "DM": "Drone Matters", "TBS": "Team BlackSheep", "OrangeRX": "OrangeRx"}
 NEW_PREFIX = {"DAL RC (Surveilzone)": "DalProp"}
+STOCK_STATE_MAP = {"in-stock": "in_stock",
+                   "out-of-stock": "out_of_stock"}
 class DroneMattersSpider(CrawlSpider):
     name = "dronematters"
     allowed_domains = ["dronematters.com"]
@@ -29,7 +32,6 @@ class DroneMattersSpider(CrawlSpider):
     def parse_item(self, response):
         item = Part()
         item["site"] = self.name
-        item["url"] = response.url
         product_name = response.css(".product-name h1")
         if not product_name:
             return
@@ -46,4 +48,43 @@ class DroneMattersSpider(CrawlSpider):
               item["name"] = NEW_PREFIX[m] + " " + item["name"]
             if m in CORRECT:
               item["manufacturer"] = CORRECT[m]
+
+
+        variant = {}
+        variant["timestamp"] = response.headers["Date"]
+        if "Last-Modified" in response.headers:
+          variant["timestamp"] = response.headers["Last-Modified"]
+        item["variants"] = [variant]
+
+
+        parsed = urlparse.urlparse(response.url)
+        filename = "/" + os.path.basename(parsed[2])
+        variant["url"] = urlparse.urlunparse((parsed[0], parsed[1], filename,
+                                              parsed[3], parsed[4], parsed[5]))
+
+        prices = response.css(".price-box")
+        if prices:
+          special = prices.css(".special-price .price::text")
+          full_product_price = prices.css(".full-product-price .price::text")
+          if special:
+            variant["price"] = special.extract_first().strip()
+          elif full_product_price:
+            # Price is dynamic based on configuration.
+            pass
+          else:
+            variant["price"] = prices.css(".regular-price .price::text").extract_first().strip()
+
+        availability = response.css(".availability")
+        if availability:
+          description = availability.css("span>span")
+          # Don't use the stock text because it may not be true. Some say in stock but are not available.
+          #classes = description.css("::attr(class)").extract_first().split()
+          #text = description.css("::text").extract_first().strip()
+          #print(classes, text)
+          #variant["stock_text"] = text
+          stock_class = availability.css("::attr(class)").extract_first().split()[1]
+          if stock_class in STOCK_STATE_MAP:
+            variant["stock_state"] = STOCK_STATE_MAP[stock_class]
+          else:
+            print(stock_class)
         return item
