@@ -9,10 +9,10 @@ import scrapy
 
 
 class Part(scrapy.Item):
-    url = scrapy.Field()
     name = scrapy.Field()
     site = scrapy.Field()
     manufacturer = scrapy.Field()
+    sku = scrapy.Field()
     weight = scrapy.Field()
-    price = scrapy.Field()
-    quantity = scrapy.Field()
+    # url, price, quantity, stock, description, location, timestamp
+    variants = scrapy.Field()

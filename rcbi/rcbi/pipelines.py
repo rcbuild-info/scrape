@@ -17,7 +17,7 @@ from scrapy.conf import settings
 
 class JsonFileMergerPipeline(object):
     def open_spider(self, spider):
-        self.root = spider.settings["JSON_FILE_DIRECTORY"]
+        self.root = os.path.realpath(spider.settings["JSON_FILE_DIRECTORY"])
         self.part_skeleton = spider.settings["PART_SKELETON_FILE"]
 
     def process_item(self, item, spider):
@@ -29,17 +29,61 @@ class JsonFileMergerPipeline(object):
         d = os.path.dirname(full_fn)
         if not os.path.isdir(d):
             os.makedirs(d)
+
+        while os.path.islink(full_fn):
+          full_fn = os.path.realpath(full_fn)
+
+        if "sku" in item and item["sku"] != "":
+          sku_fn = os.path.join(self.root, "_skus/" + item["site"] + "/" + item["sku"].replace(" ", "-").replace("/", "-"))
+          d = os.path.dirname(sku_fn)
+          if not os.path.isdir(d):
+              os.makedirs(d)
+          if os.path.islink(sku_fn):
+            new_full_fn = os.path.realpath(sku_fn)
+
+            # Update the existing file to a link to the new one. This may lose info.
+            if full_fn != new_full_fn:
+              os.remove(full_fn)
+              print(new_full_fn, full_fn)
+              os.symlink(os.path.relpath(new_full_fn, os.path.dirname(full_fn)), full_fn)
+
+            full_fn = new_full_fn
+          else:
+            # Create a sku link to our full_fn
+            os.symlink(os.path.relpath(full_fn, os.path.dirname(sku_fn)), sku_fn)
+
         part_info = {}
         if os.path.isfile(full_fn):
-          with open(full_fn, "r") as f:
-            part_info = json.loads(f.read())
-        elif os.path.islink(full_fn):
-          full_fn = os.path.realpath(full_fn)
           with open(full_fn, "r") as f:
             part_info = json.loads(f.read())
         else:
           with open(self.part_skeleton, "r") as f:
             part_info = json.loads(f.read())
+
+            # Delete any example objects.
+            for i, variant in enumerate(part_info["variants"]):
+              if "example" in variant:
+                del part_info["variants"][i]
+
+        # Update to version 2.
+        if "version" not in part_info:
+          part_info["version"] = 2
+          # Allow for multiple categories for parts such as PDBs that are also OSDs.
+          if part_info["category"]:
+            part_info["categories"] = [part_info["category"]]
+          else:
+            part_info["categories"] = []
+          del part_info["category"]
+
+          part_info["weight"] = ""
+
+          # Store store urls as variants rather than a list so we know more about each.
+          part_info["variants"] = []
+          if "urls" in part_info and "store" in part_info["urls"]:
+            for store_url in part_info["urls"]["store"]:
+              part_info["variants"].append({"url": store_url})
+          del part_info["urls"]["store"]
+
 
         # Scraped parts now have weight and price but I'm not sure how we want
         # to store it here. So we drop it for now.
@@ -47,35 +91,22 @@ class JsonFileMergerPipeline(object):
             part_info["name"] = item["name"]
         if "manufacturer" in item and ("manufacturer" not in part_info or not part_info["manufacturer"]):
             part_info["manufacturer"] = item["manufacturer"]
-        if "urls" not in part_info:
-            part_info["urls"] = {}
-            part_info["urls"]["store"] = [item["url"]]
-        else:
-          domain = urlparse.urlparse(item["url"]).netloc
-          part_info["urls"]["store"] = filter(lambda x: urlparse.urlparse(x).netloc != domain, part_info["urls"]["store"])
+        if "weight" in item and ("weight" not in part_info or not part_info["weight"]):
+          part_info["weight"] = item["weight"]
 
-          part_info["urls"]["store"].append(item["url"])
-        part_info["urls"]["store"] = filter(bool, part_info["urls"]["store"])
+        # map existing urls to their variant object
+        url_to_index = {}
+        for i, variant in enumerate(part_info["variants"]):
+          url_to_index[variant["url"]] = i
 
-        # Some stores provide the same item under different urls depending on
-        # the category. In this case the filename is still the same so here we
-        # ensure we only have one of them. We also start at the end of the list
-        # so we keep the newest urls.
-        store_urls = part_info["urls"]["store"]
-        store_url_ids = set()
-        unique_store_urls = []
-        for url in reversed(store_urls):
-          parsed = urlparse.urlparse(url)
-          if parsed.query != "" or os.path.basename(parsed.path) == "":
-            unique_store_urls.append(url)
-            continue
+        # Update all variants from this one.
+        for variant in item["variants"]:
+          url = variant["url"]
+          if url in url_to_index:
+            part_info["variants"][url_to_index[url]].update(variant)
+          else:
+            part_info["variants"].append(variant)
 
-          key = (parsed.netloc, os.path.basename(parsed.path))
-          if key not in store_url_ids:
-            unique_store_urls.append(url)
-            store_url_ids.add(key)
-        # Reverse the list again to approximate the original order.
-        part_info["urls"]["store"] = list(reversed(unique_store_urls))
         # also catalog subpart ids
         # also catalog interchangeable parts
         with open(full_fn, "w") as f:
