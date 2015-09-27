@@ -22,24 +22,36 @@ class FliteTestSpider(CrawlSpider):
     def parse_item(self, response):
       item = Part()
       item["site"] = self.name
-      item["url"] = response.url
       product_name = response.css(".product-heading h1")
       if not product_name:
           return
       item["name"] = product_name[0].xpath("text()").extract()[0].strip()
 
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      item["variants"] = [variant]
+      variant["url"] = response.url
+
       price = response.css(".VariationProductPrice")
       if price:
-        item["price"] = price.xpath("text()").extract()[0].strip()
+        variant["price"] = price.xpath("text()").extract()[0].strip()
       else:
         price = response.css(".RetailPrice")
         if price:
-          item["price"] = price.xpath("text()").extract()[0].strip()
+          variant["price"] = price.xpath("text()").extract()[0].strip()
 
       for quantity in QUANTITY:
         if quantity in item["name"]:
-          item["quantity"] = 4
+          variant["quantity"] = QUANTITY[quantity]
           item["name"] = item["name"].replace(quantity, "")
+
+      add_to_cart = response.css(".BulkDiscount::attr(style)")
+      if add_to_cart:
+        style = add_to_cart.extract_first().strip()
+        if style == "display:":
+          variant["stock_state"] = "in_stock"
+        else:
+          variant["stock_state"] = "out_of_stock"
 
       for m in MANUFACTURERS:
         if item["name"].startswith(m):
