@@ -20,7 +20,6 @@ class FPVModelSpider(SitemapSpider):
     def parse_item(self, response):
       item = Part()
       item["site"] = self.name
-      item["url"] = response.url
       product_name = response.css(".item-goods h1")
       if not product_name:
           return
@@ -30,9 +29,25 @@ class FPVModelSpider(SitemapSpider):
         if item["name"].startswith(prefix):
           item["name"] = item["name"][len(prefix):]
 
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      item["variants"] = [variant]
+      variant["url"] = response.url
+
       price = response.css(".format-price")
       if price:
-        item["price"] = price.xpath("text()").extract()[0].strip()
+        variant["price"] = price.xpath("text()").extract()[0].strip()
+
+      add_cart = response.css("#add-cart::attr(value)")
+      if add_cart:
+        v = add_cart.extract_first().strip()
+        if v == "Add To Cart":
+          variant["stock_state"] = "in_stock"
+        elif v == "Sold Out":
+          variant["stock_state"] = "out_of_stock"
+
+      # TODO(tannewt): Handle variants. There is an embedded json structure that
+      # stores the additional price.
 
       for m in MANUFACTURERS:
         if item["name"].startswith(m):
