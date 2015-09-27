@@ -24,7 +24,6 @@ class BanggoodSpider(CrawlSpider):
     def parse_item(self, response):
       item = Part()
       item["site"] = self.name
-      item["url"] = response.url
       product_name = response.css(".good_main h1")
       if not product_name:
           return
@@ -35,9 +34,48 @@ class BanggoodSpider(CrawlSpider):
           item["name"] = item["name"][len(prefix):]
           break
 
-      price = response.css(".price .now")
-      if price:
-        item["price"] = price.xpath("text()").extract()[0].strip()
+      sku = response.css("[itemprop=\"sku\"]::text")
+      if sku:
+        sku = sku.extract_first().strip()
+        if sku[:3] == "SKU":
+          sku = sku[3:]
+        item["sku"] = sku
+
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      item["variants"] = [variant]
+      variant["url"] = response.url
+
+      buy_link = response.css(".buy_link")
+      if buy_link:
+        # They have a typo in their css class.
+        preorder = buy_link.css(".perorder")
+        buy_now = buy_link.css(".buynow")
+        if preorder:
+          variant["stock_state"] = "backordered"
+        elif buy_now:
+          variant["stock_state"] = "in_stock"
+        else:
+          print("unknown stock state")
+
+      stock_text = response.css(".good_main .status")
+      if "stock_state" in variant and stock_text:
+        variant["stock_text"] = stock_text.xpath("string(.)").extract_first().strip()
+
+      # TODO(tannewt): Support multiple Bangood warehouses.
+      warehouse = response.css(".item_con .active::text")
+      if warehouse:
+        variant["location"] = warehouse.extract_first().strip()
+
+      currency = response.css("[itemprop=\"priceCurrency\"]::attr(content)")
+      if currency:
+        price = response.css("[itemprop=\"price\"]::text")
+        if price:
+          currency = currency.extract_first()
+          if currency != "USD":
+            print(currency)
+            return
+          variant["price"] = "$" + price.extract_first().strip()
 
       for m in MANUFACTURERS:
         if item["name"].startswith(m):
