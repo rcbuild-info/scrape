@@ -30,6 +30,11 @@ class MyRCMartSpider(CrawlSpider):
           return
       item["name"] = product_name[0].xpath("text()").extract()[0]
 
+
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      item["variants"] = [variant]
+
       parsed = urlparse.urlparse(response.url)
       qs = urlparse.parse_qs(parsed.query)
       qs.pop("cPath", None)
@@ -39,9 +44,9 @@ class MyRCMartSpider(CrawlSpider):
       for k in qs:
           if len(qs[k]) == 1:
               qs[k] = qs[k][0]
-      item["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
-                                         parsed[3], urllib.urlencode(qs),
-                                         parsed[5]))
+      variant["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
+                                            parsed[3], urllib.urlencode(qs),
+                                            parsed[5]))
 
       details = response.css("td.prod_detail")
       manufacturer = None
@@ -50,19 +55,40 @@ class MyRCMartSpider(CrawlSpider):
           if len(text) == 0:
             continue
           header = text[0]
-          data = details[2*i+1].xpath("text()").extract()[0]
+          data = details[2*i+1].xpath("text()").extract_first()
           if header == "Manufacturer:" and data != "Other":
             manufacturer = data
           elif header == "Weight:":
             item["weight"] = data
+          elif header == "Availability:":
+            variant["stock_text"] = data.strip().replace("\n", "")
+
+      info_box = response.css(".infoBoxContents")
+      if info_box:
+        purchase = info_box.css("td.main[align=\"right\"]")
+        input_text = purchase.css("input[type=\"image\"]::attr(alt)")
+        if input_text:
+          text = input_text.extract_first().strip()
+          if text == "Add to Cart":
+            variant["stock_state"] = "in_stock"
+          elif text == "Back order is required for this item.":
+            variant["stock_state"] = "backordered"
+          else:
+            print("available", text, response.url)
+        else:
+          sold_out = purchase.css("img")
+          if sold_out:
+            variant["stock_state"] = "out_of_stock"
+          else:
+            print("unknown stock", response.url)
 
       price = response.css("td.prod_detail_price")
       if price:
         special = price[1].css(".productSpecialPrice")
         if special:
-          item["price"] = special.xpath("text()").extract()[0]
+          variant["price"] = special.xpath("text()").extract()[0]
         else:
-          item["price"] = price[1].xpath("text()").extract()[0]
+          variant["price"] = price[1].xpath("text()").extract()[0]
 
       if not manufacturer:
         for m in MANUFACTURERS:
