@@ -20,15 +20,27 @@ class VooDooQuadsSpider(CrawlSpider):
     def parse_item(self, response):
       item = Part()
       item["site"] = self.name
-      item["url"] = response.url
       product_name = response.css(".ProductMain h1")
       if not product_name:
           return
       item["name"] = product_name[0].xpath("text()").extract()[0].strip()
 
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      item["variants"] = [variant]
+      variant["url"] = response.url
+
       price = response.css(".ProductPrice")
       if price:
-        item["price"] = price.xpath("text()").extract()[0]
+        variant["price"] = price.xpath("text()").extract()[0]
+
+      add_to_cart = response.css("input.AddCartButton::attr(style)")
+      if add_to_cart:
+        style = add_to_cart.extract_first().strip()
+        if style == "display:":
+          variant["stock_state"] = "in_stock"
+        else:
+          variant["stock_state"] = "out_of_stock"
 
       if "VDQ" in item["name"] or "VooDoo" in item["name"]:
         item["manufacturer"] = "VooDoo Quads"
