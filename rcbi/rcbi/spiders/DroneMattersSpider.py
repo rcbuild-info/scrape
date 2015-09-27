@@ -56,7 +56,6 @@ class DroneMattersSpider(CrawlSpider):
           variant["timestamp"] = response.headers["Last-Modified"]
         item["variants"] = [variant]
 
-
         parsed = urlparse.urlparse(response.url)
         filename = "/" + os.path.basename(parsed[2])
         variant["url"] = urlparse.urlunparse((parsed[0], parsed[1], filename,

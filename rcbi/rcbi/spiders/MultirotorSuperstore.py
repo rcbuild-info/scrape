@@ -12,9 +12,7 @@ import urllib
 MANUFACTURERS = ["Cobra", "Dinogy", "SkyRC", "DYS", "HQProp", "iPower", "Tattu", "GemFan", "SunnySky", "Emax", "ZTW", "MS", "FrSky", "RCTimer", "TBS", "VAS", "DTF UHF", "Pololu", "ImmersionRC", "Hovership", "FatShark", "Hawkeye", "Brotronics", "Argonaut", "3DR", "Tarot", "SkyZone", "Shendrones", "Revolectrix", "Flying Cinema", "Airbot", "Circular Wireless"]
 CORRECT = {"GemFan": "Gemfan", "SunnySky": "Sunnysky", "Emax": "EMAX", "MS": "MultirotorSuperstore", "TBS": "Team BlackSheep", "VAS": "Video Aerial Systems", "3DR": "3DRobotics", "SkyZone": "Skyzone", "ShenDrones": "Shendrones"}
 NEW_PREFIX = {}
-STOCK_STATE_MAP = {"backordered": "backordered",
-                   "expected-on": "out_of_stock",
-                   "http://schema.org/InStock": "in_stock",
+STOCK_STATE_MAP = {"http://schema.org/InStock": "in_stock",
                    "http://schema.org/OutOfStock": "out_of_stock"}
 class MultirotorSuperstoreSpider(CrawlSpider):
     name = "multirotorsuperstore"
