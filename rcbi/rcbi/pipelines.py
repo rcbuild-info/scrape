@@ -101,6 +101,9 @@ class JsonFileMergerPipeline(object):
         for variant in item["variants"]:
           part_info["variants"].append(variant)
 
+        # Sort by url so we can be somewhat more stable in order than last one is last.
+        part_info["variants"].sort(key=lambda x: x["url"])
+
         # also catalog subpart ids
         # also catalog interchangeable parts
         with open(full_fn, "w") as f:
