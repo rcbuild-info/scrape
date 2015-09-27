@@ -16,6 +16,10 @@ QUANTITY = {" Set (2CCW + 2CW)": 4,
             " Value Pack - 6 Set (2CCW + 2CW)": 24,
             " Value Pack - 12 Set (2CCW + 2CW)": 48,
             " Value Pack - 25 Set (2CCW + 2CW)": 100}
+STOCK_STATE_MAP = {"In Stock": "in_stock",
+                   "Pre-Order": "backordered",
+                   "Back Order": "backordered",
+                   "Out Of Stock": "out_of_stock"}
 class BoltRCSpider(CrawlSpider):
     name = "boltrc"
     allowed_domains = ["boltrc.com"]
@@ -35,6 +39,10 @@ class BoltRCSpider(CrawlSpider):
           return
       item["name"] = product_name[0].xpath("text()").extract()[0].strip()
 
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      item["variants"] = [variant]
+
       parsed = urlparse.urlparse(response.url)
       qs = urlparse.parse_qs(parsed.query)
       qs.pop("path", None)
@@ -44,18 +52,28 @@ class BoltRCSpider(CrawlSpider):
       for k in qs:
           if len(qs[k]) == 1:
               qs[k] = qs[k][0]
-      item["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
-                                         parsed[3], urllib.urlencode(qs),
-                                         parsed[5]))
+      variant["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
+                                            parsed[3], urllib.urlencode(qs),
+                                            parsed[5]))
 
       price = response.css(".price-tax")
       if price:
-        item["price"] = price.xpath("text()").extract()[0].split()[-1]
+        variant["price"] = price.xpath("text()").extract()[0].split()[-1]
 
       for quantity in QUANTITY:
         if quantity in item["name"]:
-          item["quantity"] = QUANTITY[quantity]
+          variant["quantity"] = QUANTITY[quantity]
           item["name"] = item["name"].replace(quantity, "")
+
+      right_col = response.css(".product_main_right::text")
+      if right_col:
+        availability = right_col.extract()[-1].strip().split(None, 1)
+        if availability[0] == "Availability:":
+          if availability[1] in STOCK_STATE_MAP:
+            variant["stock_state"] = STOCK_STATE_MAP[availability[1]]
+            variant["stock_text"] = availability[1]
+          else:
+            print(availability[1])
 
       for m in MANUFACTURERS:
         if item["name"].startswith(m):
