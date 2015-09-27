@@ -72,8 +72,6 @@ class RotorGeeksSpider(CrawlSpider):
 
         variant = {}
         variant["timestamp"] = response.headers["Date"]
-        if "Last-Modified" in response.headers:
-          variant["timestamp"] = response.headers["Last-Modified"]
         item["variants"] = [variant]
 
         text = response.css(".description::text")
@@ -106,7 +104,7 @@ class RotorGeeksSpider(CrawlSpider):
                                               parsed[3], urllib.urlencode(qs),
                                               parsed[5]))
 
-        price = response.css(".price")
+        price = response.css(".product-info .price")
         if price:
           special = price.css(".price-new::text")
           if special:
