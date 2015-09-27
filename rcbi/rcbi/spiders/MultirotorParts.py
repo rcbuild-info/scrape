@@ -4,6 +4,10 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from rcbi.items import Part
 
+import os.path
+import urlparse
+import urllib
+
 MANUFACTURERS = ["Blackout", "Cobra", "HQProp", "ImmersionRC", "Pololu", "T-Motor", "FrSky", "Gemfan", "Diatone", "DYS", "ZTW"]
 CORRECT = {}
 NEW_PREFIX = {}
@@ -14,6 +18,8 @@ class MultirotorPartsSpider(CrawlSpider):
     allowed_domains = ["multirotorparts.com"]
     start_urls = ["https://www.multirotorparts.com/"]
 
+    custom_settings = {"DOWNLOAD_DELAY": 2}
+
     rules = (
         Rule(LinkExtractor(restrict_css=["#vertnav", ".pages"])),
 
@@ -23,7 +29,6 @@ class MultirotorPartsSpider(CrawlSpider):
     def parse_item(self, response):
       item = Part()
       item["site"] = self.name
-      item["url"] = response.url
       product_name = response.css(".product-name h1")
       if not product_name:
           return
@@ -34,18 +39,37 @@ class MultirotorPartsSpider(CrawlSpider):
           item["name"] = item["name"][len(prefix):]
           break
 
-      price = response.css(".special-price .price")
+      sku = response.css("#productId::attr(value)")
+      if sku:
+        item["sku"] = sku.extract_first()
+
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      item["variants"] = [variant]
+
+      parsed = urlparse.urlparse(response.url)
+      filename = "/" + os.path.basename(parsed[2])
+      variant["url"] = urlparse.urlunparse((parsed[0], parsed[1], filename,
+                                            parsed[3], parsed[4], parsed[5]))
+
+      price = response.css(".special-price .price::text")
       if price:
-        item["price"] = price.xpath("text()").extract()[0].strip()
+        variant["price"] = price.extract_first().strip()
       else:
-        price = response.css(".regular-price .price")
+        price = response.css(".regular-price .price::text")
         if price:
-          item["price"] = price.xpath("text()").extract()[0].strip()
+          variant["price"] = price.extract_first().strip()
 
       for quantity in QUANTITY:
         if quantity in item["name"]:
-          item["quantity"] = 4
+          variant["quantity"] = QUANTITY[quantity]
           item["name"] = item["name"].replace(quantity, "")
+
+      add_to_cart = response.css(".add-to-cart")
+      if add_to_cart:
+        variant["stock_state"] = "in_stock"
+      else:
+        variant["stock_state"] = "out_of_stock"
 
       for m in MANUFACTURERS:
         if item["name"].startswith(m):
