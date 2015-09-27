@@ -12,10 +12,14 @@ CORRECT = {"Ztw": "ZTW", "SunnySky": "Sunnysky", "LRC": "Lift RC", "Fat Shark": 
 MANUFACTURERS.extend(CORRECT.keys())
 NEW_PREFIX = {}
 QUANTITY = {"Pair ": 2}
+STOCK_STATE_MAP = {"http://schema.org/InStock": "in_stock",
+                   "http://schema.org/OutOfStock": "out_of_stock"}
 class LiftRCSpider(CrawlSpider):
     name = "liftrc"
     allowed_domains = ["liftrc.com"]
     start_urls = ["http://liftrc.com"]
+
+    custom_settings = {"DOWNLOAD_DELAY": 4}
 
     rules = (
         Rule(LinkExtractor(restrict_css=[".sm_megamenu_menu", ".pages"])),
@@ -31,6 +35,10 @@ class LiftRCSpider(CrawlSpider):
           return
       item["name"] = product_name[0].xpath("text()").extract()[0].strip()
 
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      item["variants"] = [variant]
+
       parsed = urlparse.urlparse(response.url)
       qs = urlparse.parse_qs(parsed.query)
       qs.pop("path", None)
@@ -40,18 +48,31 @@ class LiftRCSpider(CrawlSpider):
       for k in qs:
           if len(qs[k]) == 1:
               qs[k] = qs[k][0]
-      item["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
-                                         parsed[3], urllib.urlencode(qs),
-                                         parsed[5]))
+      variant["url"] = urlparse.urlunparse((parsed[0], parsed[1], parsed[2],
+                                            parsed[3], urllib.urlencode(qs),
+                                            parsed[5]))
 
       price = response.css("[itemprop='price']")
-      if price:
-        item["price"] = price.xpath("text()").extract()[0].split()[-1]
+      if price and len(price) == 1:
+        variant["price"] = price.xpath("text()").extract()[0].split()[-1]
 
       for quantity in QUANTITY:
         if quantity in item["name"]:
-          item["quantity"] = QUANTITY[quantity]
+          variant["quantity"] = QUANTITY[quantity]
           item["name"] = item["name"].replace(quantity, "")
+
+      availability = response.css("[itemprop=\"availability\"]::attr(href)").extract_first()
+      if availability:
+        variant["stock_state"] = STOCK_STATE_MAP[availability]
+        limited = response.css(".availability-only>span::attr(title)")
+        if limited:
+          variant["stock_state"] = "low_stock"
+          variant["stock_text"] = limited.extract_first().strip()
+      else:
+        preorder = response.css(".ampreorder_note::text")
+        if preorder:
+          variant["stock_state"] = "backordered"
+          variant["stock_text"] = preorder.extract_first().strip()
 
       for m in MANUFACTURERS:
         if item["name"].startswith(m):
