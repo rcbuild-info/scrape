@@ -11,6 +11,8 @@ MANUFACTURERS = ["Gemfan"]
 CORRECT = {"HQ Prop": "HQProp"}
 MANUFACTURERS.extend(CORRECT.keys())
 QUANTITY = {}
+STOCK_STATE_MAP = {"http://schema.org/InStock": "in_stock",
+                   "http://schema.org/OutOfStock": "out_of_stock"}
 class HoverthingsSpider(CrawlSpider):
     name = "hoverthings"
     allowed_domains = ["hoverthings.com"]
@@ -25,19 +27,31 @@ class HoverthingsSpider(CrawlSpider):
     def parse_item(self, response):
       item = Part()
       item["site"] = self.name
-      item["url"] = response.url
       product_name = response.css(".product-name span")
       if not product_name:
           return
-      item["name"] = product_name[0].xpath("text()").extract()[0].strip()
+      item["name"] = product_name[0].css("::text").extract_first().strip()
 
-      price = response.css(".price")
+      variant = {}
+      variant["timestamp"] = response.headers["Date"]
+      item["variants"] = [variant]
+      variant["url"] = response.url
+
+      price = response.css("[itemprop=\"price\"]::text")
       if price:
-        item["price"] = price.xpath("text()").extract()[0].strip()
+        variant["price"] = price.extract_first().strip()
+
+      availability = response.css("[itemprop=\"availability\"]::attr(href)")
+      if availability:
+        text = availability.extract_first().strip()
+        if text in STOCK_STATE_MAP:
+          variant["stock_state"] = STOCK_STATE_MAP[text]
+        else:
+          print(text)
 
       for quantity in QUANTITY:
         if quantity in item["name"]:
-          item["quantity"] = QUANTITY[quantity]
+          variant["quantity"] = QUANTITY[quantity]
           item["name"] = item["name"].replace(quantity, "")
 
       for m in MANUFACTURERS:
