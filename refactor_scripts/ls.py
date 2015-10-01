@@ -26,6 +26,9 @@ def boldgreen(text):
 def gray(text):
   printColor('\033[90m', text)
 
+def yellow(text):
+  printColor('\033[93m', text)
+
 def listFiles(files, sites):
   for fn in files:
     if fn.endswith(".directory"):
@@ -54,18 +57,16 @@ def listFiles(files, sites):
                   break
               if keep:
                 break
-        if "category" in part and part["category"] != "":
-          if not keep:
-            red(fn)
-          else:
-            green(fn)
-        elif "categories" in part and len(part["categories"]) > 0:
+        if "categories" in part and len(part["categories"]) > 0:
           if not keep:
             boldred(fn)
           else:
             boldgreen(fn)
         elif keep:
-          normal(fn)
+          if "version" not in part:
+            yellow(fn)
+          else:
+            normal(fn)
     elif os.path.isdir(fn):
       dn = fn
       for fn in os.listdir(dn):

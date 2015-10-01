@@ -6,14 +6,14 @@ import os.path
 import json
 
 
-DIRECTORY = "/Users/tannewt/case/parts"
+#DIRECTORY = "/Users/tannewt/case/parts"
 
 TOTAL_PARTS = 0
 TOTAL_SUPPORTED = 0
 
 UNSUPPORTED_DIR_COUNT = []
 
-for dirpath, dirnames, filenames in os.walk(DIRECTORY):
+for dirpath, dirnames, filenames in os.walk("."):
   if dirpath.find(".git") > -1:
     continue
   unsupported_count = 0
@@ -30,16 +30,16 @@ for dirpath, dirnames, filenames in os.walk(DIRECTORY):
       part = json.load(f)
 
     if "version" not in part:
-      #print(fn)
+      print(fn)
       continue
 
-    invalid_variants = []
-    for i, v in enumerate(part["variants"]):
-      if len(v.keys()) == 1:
-        invalid_variants.append(i)
-
-    if len(invalid_variants) > 0:
-      for i in reversed(invalid_variants):
-        del part["variants"][i]
-      with open(fn, "w") as f:
-        f.write(json.dumps(part, indent=1, sort_keys=True, separators=(',', ': ')))
+    # invalid_variants = []
+    # for i, v in enumerate(part["variants"]):
+    #   if len(v.keys()) == 1:
+    #     invalid_variants.append(i)
+    #
+    # if len(invalid_variants) > 0:
+    #   for i in reversed(invalid_variants):
+    #     del part["variants"][i]
+    #   with open(fn, "w") as f:
+    #     f.write(json.dumps(part, indent=1, sort_keys=True, separators=(',', ': ')))
