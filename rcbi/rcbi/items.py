@@ -14,5 +14,5 @@ class Part(scrapy.Item):
     manufacturer = scrapy.Field()
     sku = scrapy.Field()
     weight = scrapy.Field()
-    # url, price, quantity, stock, description, location, timestamp
+    # url, price, quantity, stock_state, stock_text, description, location, timestamp
     variants = scrapy.Field()
