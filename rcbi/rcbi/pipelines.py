@@ -43,7 +43,8 @@ class JsonFileMergerPipeline(object):
 
             # Update the existing file to a link to the new one. This may lose info.
             if full_fn != new_full_fn:
-              os.remove(full_fn)
+              if os.path.isfile(full_fn):
+                os.remove(full_fn)
               print(new_full_fn, full_fn)
               os.symlink(os.path.relpath(new_full_fn, os.path.dirname(full_fn)), full_fn)
 
@@ -62,7 +63,7 @@ class JsonFileMergerPipeline(object):
 
             # Delete any example objects.
             for i, variant in enumerate(part_info["variants"]):
-              if "example" in variant:
+              if "_example" in variant:
                 del part_info["variants"][i]
 
         # Update to version 2.
@@ -83,7 +84,6 @@ class JsonFileMergerPipeline(object):
             for store_url in part_info["urls"]["store"]:
               part_info["variants"].append({"url": store_url})
           del part_info["urls"]["store"]
-
 
         # Scraped parts now have weight and price but I'm not sure how we want
         # to store it here. So we drop it for now.
