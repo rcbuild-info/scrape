@@ -16,10 +16,11 @@ NEWSPIDER_MODULE = 'rcbi.spiders'
 DOWNLOAD_DELAY = 0.25
 
 EXTENSIONS = {
-    'scrapy.extensions.corestats.CoreStats': 500#,
+    'scrapy.extensions.corestats.CoreStats': 500,
+    'rcbi.site_tracker.SiteTracker': 500#,
     #'scrapy.extensions.closespider.CloseSpider': 500,
 }
-#CLOSESPIDER_PAGECOUNT=30
+#CLOSESPIDER_PAGECOUNT=20
 
 LOG_LEVEL="INFO"
 
