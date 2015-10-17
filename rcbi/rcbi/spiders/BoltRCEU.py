@@ -30,7 +30,6 @@ class BoltRCEUSpider(CrawlSpider):
       return
     item["name"] = product_name[0].xpath("text()").extract_first().strip()
 
-
     sku = response.css("[itemprop=\"sku\"]::text")
     if sku:
       item["sku"] = sku.extract_first().strip()
@@ -48,10 +47,10 @@ class BoltRCEUSpider(CrawlSpider):
         variant["quantity"] = QUANTITY[quantity]
         item["name"] = item["name"].replace(quantity, "")
 
-    availability = response.css("#availability_value::text")
+    availability = response.css("#availability_value")
     if availability:
-      availability = availability.extract_first().strip()
-      if availability == "":
+      availability = availability.css("::text").extract_first()
+      if availability == None or availability.strip() == "":
         variant["stock_state"] = "in_stock"
       else:
         variant["stock_state"] = "out_of_stock"
