@@ -14,14 +14,14 @@ class FliteTestSpider(CrawlSpider):
   start_urls = ["http://store.flitetest.com/"]
 
   rules = (
-      Rule(LinkExtractor(restrict_css=[".sf-menu", ".CategoryPagination"])),
-      Rule(LinkExtractor(restrict_css=".ProductDetails"), callback='parse_item'),
+      Rule(LinkExtractor(restrict_css=[".category-list", ".pagination"])),
+      Rule(LinkExtractor(restrict_css=".ProductName"), callback='parse_item'),
   )
 
   def parse_item(self, response):
     item = Part()
     item["site"] = self.name
-    product_name = response.css(".product-heading h1")
+    product_name = response.css("[itemprop=\"name\"]")
     if not product_name:
       return
     item["name"] = product_name[0].xpath("text()").extract()[0].strip()
@@ -43,7 +43,7 @@ class FliteTestSpider(CrawlSpider):
         variant["quantity"] = QUANTITY[quantity]
         item["name"] = item["name"].replace(quantity, "")
 
-    add_to_cart = response.css(".BulkDiscount::attr(style)")
+    add_to_cart = response.css(".AddToCartButtonRow::attr(style)")
     if add_to_cart:
       style = add_to_cart.extract_first().strip()
       if style == "display:":
