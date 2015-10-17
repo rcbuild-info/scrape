@@ -44,7 +44,6 @@ class MiniQuadBrosSpider(CrawlSpider):
     m = VARIANT_JSON_REGEX.search(body)
     if m:
       shopify_info = json.loads(m.group(1))
-      print(shopify_info["vendor"])
       global_title = shopify_info["title"]
       preorder = False
       if global_title.endswith("Pre Order"):
