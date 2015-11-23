@@ -4,7 +4,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
 ALL_SPIDERS = {"small": ["infinitefpv", "voodooquads", "shendrones", "demonframes", "lizardrc", "miniquadfpv", "hoverthings", "impulserc", "fpvreconn", "armattan", "dronematters", "flitetest", "boltrceu", "miniquadbros"],
-               "medium": ["multirotorparts", "buzzhobbies", "flyingrobot", "uavobjects", "rotorgeeks", "fpvmodel", "multirotormania", "readytoflyquads", "flyduino", "banggood", "getfpv"],
+               "medium": ["multirotorparts", "buzzhobbies", "flyingrobot", "uavobjects", "rotorgeeks", "fpvmodel", "multirotormania", "readytoflyquads", "flyduino", "banggood", "getfpv", "stoneblueairlines"],
                "large": ["readymaderc", "multirotorsuperstore", "liftrc", "boltrc", "myrcmart"],
                "huge": ["hobbyking", "innov8tivedesigns"]}
 
